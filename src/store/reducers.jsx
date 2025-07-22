@@ -13,6 +13,8 @@ export const initialState = {
   operation: "+",
   memory: 0,
   next: null,
+  display: "0", // Ekran değeri için - bu TotalDisplay'de gösterilecek
+  waitingForNewNumber: false, // Yeni sayı girişi bekleniyor mu?
 };
 
 const calculateResult = (num1, num2, operation) => {
@@ -24,9 +26,9 @@ const calculateResult = (num1, num2, operation) => {
     case "-":
       return num1 - num2;
     case "/":
-      return num1 / num2;
+      return num2 !== 0 ? num1 / num2 : num1; // Sıfıra bölme kontrolü
     default:
-      return;
+      return num2; // Geçersiz işlem durumunda ikinci sayıyı döndür
   }
 };
 
@@ -39,6 +41,8 @@ export const reducer = (state, action) => {
           state.operation === "="
             ? action.payload
             : calculateResult(state.total, action.payload, state.operation),
+        display: action.payload.toString(),
+        waitingForNewNumber: false,
       };
 
     case CHANGE_OPERATION:
@@ -47,13 +51,19 @@ export const reducer = (state, action) => {
         operation: action.payload,
         memory: state.total,
         total: 0,
+        waitingForNewNumber: true, // Yeni sayı girişi bekleniyor
+        display: "0", // Ekranı sıfırla
       };
 
     case CLEAR_DISPLAY:
       return {
         ...state,
         total: 0,
-        operation: "+",
+        operation: "null",
+        memory: 0,
+        next: null,
+        display: "0", // Ekranı sıfırla
+        waitingForNewNumber: false, // Yeni sayı girişi beklenmiyor
       };
 
     case RESULT:
@@ -64,10 +74,21 @@ export const reducer = (state, action) => {
       };
 
     case MEMORY_ADD:
-      return {
-        ...state,
-        memory: state.total,
-      };
+      if (state.operation) {
+        const result = calculateResult(
+          state.total,
+          Number(state.display),
+          state.operation
+        );
+        return {
+          ...state,
+          total: result,
+          operation: "null",
+          display: result.toString(),
+          waitingForNewNumber: true, // Yeni sayı girişi bekleniyor
+        };
+      }
+      return state;
 
     case MEMORY_RECALL:
       return {
