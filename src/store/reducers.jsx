@@ -1,5 +1,5 @@
-import { 
-  APPLY_NUMBER, 
+import {
+  APPLY_NUMBER,
   CHANGE_OPERATION,
   CLEAR_DISPLAY,
   RESULT,
@@ -12,6 +12,7 @@ export const initialState = {
   total: 0,
   operation: "+",
   memory: 0,
+  next: null,
 };
 
 const calculateResult = (num1, num2, operation) => {
@@ -34,25 +35,32 @@ export const reducer = (state, action) => {
     case APPLY_NUMBER:
       return {
         ...state,
-        total: calculateResult(state.total, action.payload, state.operation),
+        total:
+          state.operation === "="
+            ? action.payload
+            : calculateResult(state.total, action.payload, state.operation),
       };
 
     case CHANGE_OPERATION:
       return {
         ...state,
         operation: action.payload,
+        memory: state.total,
+        total: 0,
       };
 
     case CLEAR_DISPLAY:
       return {
         ...state,
         total: 0,
+        operation: "+",
       };
 
     case RESULT:
       return {
         ...state,
-        total: calculateResult(state.total, 0, state.operation),
+        total: calculateResult(state.total, state.total, state.operation),
+        operation: "=",
       };
 
     case MEMORY_ADD:
@@ -66,13 +74,13 @@ export const reducer = (state, action) => {
         ...state,
         total: state.memory,
       };
-      
+
     case MEMORY_CLEAR:
       return {
         ...state,
         memory: 0,
       };
-      
+
     default:
       return state;
   }
